@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Text Detector</title>
+    <link rel="stylesheet" href="style0.css">
+</head>
+<body class="theme-dark-red"> <div class="detector-container">
+        <div class="header-row">
+            <h1>AI Text Detector by "The Development Unit"</h1>
+            <select id="themeSelector" class="theme-dropdown">
+                <option value="theme-dark-red">Dark & Red</option>
+                <option value="theme-light-blue">White & Blue</option>
+            </select>
+              <p class="about-home-link">
+    <a href="about.html">About the project!</a>
+</p>
+        </div>
+        
+        <p class="subtitle">Paste an essay or paragraph below to analyze it.(Anything below 6 words is flagged)</p>
+        
+        <textarea id="textInput" placeholder="Type or paste your text here..."></textarea>
+        
+        <button id="analyzeBtn">Analyze Text</button>
+
+        <div class="results-box" id="resultsBox">
+            <h3>Analysis Results:</h3>
+            <p><strong>Perplexity:</strong> <span id="perplexityScore">-</span></p>
+            <p><strong>Burstiness:</strong> <span id="burstinessScore">-</span></p>
+            <div class="prediction-badge" id="predictionResult">Waiting for input...</div>
+        </div>
+    </div>
+
+    <script src="detector0.js"></script>
+    <script>
+    const themeSelector = document.getElementById("themeSelector");
+
+    // Load the previously selected theme
+    const savedTheme = localStorage.getItem("selectedTheme");
+
+    if (savedTheme === "theme-light-blue" ||
+        savedTheme === "theme-dark-red") {
+        document.body.className = savedTheme;
+        themeSelector.value = savedTheme;
+    }
+
+    // Save the theme whenever the user changes it
+    themeSelector.addEventListener("change", function () {
+        document.body.className = this.value;
+        localStorage.setItem("selectedTheme", this.value);
+    });
+</script>
+</body>
+</html>

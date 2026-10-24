@@ -1,0 +1,148 @@
+// Vastly expanded dictionary of AI-favored vocabulary patterns
+const AI_KEYWORDS = [
+    "furthermore", "moreover", "in conclusion", "it is important to note", 
+    "testament", "delve", "pivotal", "transformative", "fostering", "reminds us",
+    "beacon", "tapestry", "multifaceted", "demystify", "underscores", "paramount",
+    "realm", "notably", "consequently", "subsequently", "utilize", "holistic",
+    "comprehensive", "symbiotic", "catalyst", "imperative", "avenue", "blueprint", "micromanaging"
+];
+
+// Structural phrases commonly generated as structural connective glue by LLMs
+const AI_PHRASES = [
+    "it is crucial to", "plays a vital role", "a testament to", "in summary",
+    "on the other hand", "not only does it", "sheds light on", "deep dive into",
+    "raises important questions", "takes a closer look"
+];
+
+document.addEventListener("DOMContentLoaded", () => {
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const themeSelector = document.getElementById("themeSelector");
+
+    // --- THEME SWITCHER CONTROLLER ---
+    if (themeSelector) {
+        themeSelector.addEventListener("change", (e) => {
+            document.body.className = e.target.value;
+        });
+    }
+
+    // --- DETECTION CORE TRIGGER ---
+    if (analyzeBtn) {
+        analyzeBtn.addEventListener("click", () => {
+            const textInput = document.getElementById("textInput");
+            const text = textInput ? textInput.value : "";
+            
+            if (!text.trim()) {
+                alert("Please enter some text first!");
+                return;
+            }
+            analyzeText(text);
+        });
+    }
+});
+
+function analyzeText(text) {
+    const lowerText = text.toLowerCase();
+    
+    // 1. Clean text and filter out punctuation/dashes
+    const globalCleaned = text.replace(/[—–-]/g, " ").replace(/[^a-zA-Z ]/g, "").toLowerCase();
+    
+    // MODIFIED: Only count actual words that are 2 or more characters long
+    const allWords = globalCleaned.split(/\s+/).filter(word => word.length >= 2);
+    
+    const badge = document.getElementById("predictionResult");
+    
+    // GUARDRAIL UPGRADE: Require at least 10 valid words to perform a statistical scan
+    if (allWords.length < 6) {
+        document.getElementById("perplexityScore").innerText = "N/A";
+        document.getElementById("burstinessScore").innerText = "N/A";
+        if (badge) {
+            badge.className = "prediction-badge badge-human";
+            badge.innerText = "TEXT TOO SHORT / INVALID INPUT";
+        }
+        return;
+    }
+
+    let predictabilityPoints = 0;
+    
+    // 2. Structural Phrase Scan
+    AI_PHRASES.forEach(phrase => {
+        const matches = lowerText.split(phrase).length - 1;
+        if (matches > 0) {
+            predictabilityPoints += (matches * 3.5);
+        }
+    });
+
+    // 3. Sentence Length Variance Evaluation (Burstiness)
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    const sentenceLengths = [];
+    let wordCount = 0;
+
+    sentences.forEach(sentence => {
+        let cleaned = sentence.replace(/[—–-]/g, " ");
+        cleaned = cleaned.toLowerCase().replace(/[^a-zA-Z ]/g, "");
+        
+        // Match the same 2-character word rule here
+        const words = cleaned.split(/\s+/).filter(word => word.length >= 2);
+        if (words.length === 0) return;
+
+        sentenceLengths.push(words.length);
+        wordCount += words.length;
+
+        // Individual Word Probability Assessment
+        words.forEach(word => {
+            if (AI_KEYWORDS.includes(word)) {
+                predictabilityPoints += 2.0; 
+            } else if (word.length > 8) {
+                predictabilityPoints += 0.8; 
+            } else {
+                predictabilityPoints += 0.15; 
+            }
+        });
+    });
+
+    // Secondary safety check if someone inputs only single characters split by periods
+    if (wordCount === 0) {
+        document.getElementById("perplexityScore").innerText = "N/A";
+        document.getElementById("burstinessScore").innerText = "N/A";
+        if (badge) {
+            badge.className = "prediction-badge badge-human";
+            badge.innerText = "TEXT TOO SHORT / INVALID INPUT";
+        }
+        return;
+    }
+
+    // Mathematical Normalization of Predictability
+    const rawRatio = predictabilityPoints / wordCount;
+    const averagePerplexityScore = Math.max(0, Math.min(100, 100 - (rawRatio * 35)));
+    const burstiness = calculateStandardDeviation(sentenceLengths);
+
+    // Push the dynamic updates to the User Interface layout
+    document.getElementById("perplexityScore").innerText = averagePerplexityScore.toFixed(2);
+    document.getElementById("burstinessScore").innerText = burstiness.toFixed(2);
+
+    if (badge) {
+        badge.className = "prediction-badge"; // Clear styling variants
+
+        // Strict multi-variable threshold sorting matrix
+        if (averagePerplexityScore < 65 || burstiness < 3.5) {
+            badge.innerText = "LIKELY HUMAN-WRITTEN";
+            badge.classList.add("badge-human");
+        } if (averagePerplexityScore < 78 || burstiness < 4.5) {
+            badge.innerText = "MIXED / POSSIBLY AI-ASSISTED";
+            badge.classList.add("badge-mixed");
+          if (averagePerplexityScore < 95 ) {badge.innerText = "HIGHLY HUMAN-WRITTEN"; 
+            badge.classList.add("badge-human")
+          }
+        } else if (averagePerplexityScore >= 95 || burstiness > 5.5) {
+            badge.innerText = "HIGHLY LIKELY AI-GENERATED";
+            badge.classList.add("badge-ai");
+        }
+    }
+}
+
+function calculateStandardDeviation(array) {
+    if (array.length <= 1) return 0.0;
+    const mean = array.reduce((a, b) => a + b, 0) / array.length;
+    const variance = array.reduce((total, val) => total + Math.pow(val - mean, 2), 0) / (array.length - 1);
+    return Math.sqrt(variance);
+}
